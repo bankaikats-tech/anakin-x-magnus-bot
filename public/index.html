@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Anakin x Magnus Bot — لوحة التحكم</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d0f1a;
+      --card:      #161927;
+      --border:    #252840;
+      --accent:    #5b6af0;
+      --accent2:   #8b5cf6;
+      --green:     #22c55e;
+      --red:       #ef4444;
+      --yellow:    #eab308;
+      --text:      #e2e8f0;
+      --muted:     #64748b;
+      --radius:    12px;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+
+    /* ── Header ── */
+    header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    header h1 {
+      font-size: 2rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    header p { color: var(--muted); margin-top: 6px; }
+
+    /* ── Grid ── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    /* ── Card ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+    .card h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text);
+    }
+    .card h2 .icon { font-size: 1.2rem; }
+
+    /* ── Status dot ── */
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: var(--muted);
+      flex-shrink: 0;
+    }
+    .dot.online  { background: var(--green);  box-shadow: 0 0 8px var(--green); }
+    .dot.error   { background: var(--red);    box-shadow: 0 0 8px var(--red); }
+    .dot.connecting { background: var(--yellow); animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    .stat { color: var(--muted); font-size: .85rem; margin-bottom: 6px; }
+    .stat span { color: var(--text); font-weight: 500; }
+    .error-msg { color: var(--red); font-size: .8rem; margin-top: 6px; word-break: break-all; }
+
+    /* ── Buttons ── */
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+    button {
+      padding: 8px 18px;
+      border: none;
+      border-radius: 8px;
+      font-size: .85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .2s, transform .1s;
+    }
+    button:active { transform: scale(.97); }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-primary  { background: var(--accent);  color: #fff; }
+    .btn-danger   { background: var(--red);     color: #fff; }
+    .btn-success  { background: var(--green);   color: #fff; }
+    .btn-warning  { background: var(--yellow);  color: #000; }
+    .btn-ghost    { background: var(--border);  color: var(--text); }
+
+    /* ── Inputs ── */
+    input[type="text"], input[type="file"], textarea, select {
+      width: 100%;
+      padding: 9px 12px;
+      background: #0d0f1a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: .875rem;
+      margin-bottom: 10px;
+      outline: none;
+      transition: border .2s;
+    }
+    input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+    textarea { resize: vertical; min-height: 80px; }
+    label { font-size: .8rem; color: var(--muted); display: block; margin-bottom: 4px; }
+
+    /* ── Admin list ── */
+    .admin-list { list-style: none; margin-bottom: 12px; }
+    .admin-list li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: #0d0f1a;
+      border-radius: 8px;
+      margin-bottom: 6px;
+      font-size: .85rem;
+    }
+    .admin-list li .del-btn {
+      background: transparent;
+      border: none;
+      color: var(--red);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 0 4px;
+    }
+    .tag {
+      font-size: .7rem;
+      background: var(--accent);
+      color: #fff;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-right: 6px;
+    }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--card);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: .875rem;
+      transition: transform .3s ease;
+      z-index: 999;
+      white-space: nowrap;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+    #toast.ok   { border-color: var(--green); }
+    #toast.err  { border-color: var(--red); }
+
+    /* ── Thread list ── */
+    .thread-item {
+      padding: 8px 12px;
+      background: #0d0f1a;
+      border-radius: 8px;
+      margin-bottom: 6px;
+      cursor: pointer;
+      font-size: .85rem;
+      transition: background .2s;
+    }
+    .thread-item:hover { background: var(--border); }
+    .thread-item.selected { border: 1px solid var(--accent); }
+
+    /* ── Responsive ── */
+    @media (max-width: 480px) {
+      header h1 { font-size: 1.4rem; }
+      .card { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🤖 Anakin x Magnus Bot</h1>
+  <p>لوحة تحكم البوت — Dashboard</p>
+</header>
+
+<div class="grid">
+
+  <!-- ── Status Card ── -->
+  <div class="card">
+    <h2><span class="icon">📡</span> حالة البوت</h2>
+    <div class="status-row">
+      <div class="dot" id="statusDot"></div>
+      <strong id="statusText">جاري التحميل...</strong>
+    </div>
+    <div class="stat">🆔 معرف البوت: <span id="botId">—</span></div>
+    <div class="stat">⏱️ وقت التشغيل: <span id="uptime">—</span></div>
+    <div id="errorMsg" class="error-msg" style="display:none"></div>
+    <div class="btn-row">
+      <button class="btn-success" onclick="startBot()">▶ تشغيل</button>
+      <button class="btn-warning" onclick="restartBot()">🔄 إعادة تشغيل</button>
+      <button class="btn-danger"  onclick="stopBot()">⏹ إيقاف</button>
+    </div>
+  </div>
+
+  <!-- ── Appstate Card ── -->
+  <div class="card">
+    <h2><span class="icon">🍪</span> رفع الكوكيز (AppState)</h2>
+    <label>الصق محتوى appstate.json هنا أو ارفع الملف:</label>
+    <textarea id="appstateText" placeholder='[{"key":"c_user","value":"..."}]'></textarea>
+    <label>أو اختر ملف:</label>
+    <input type="file" id="appstateFile" accept=".json" />
+    <div class="btn-row">
+      <button class="btn-primary" onclick="uploadAppstate()">⬆ رفع وإعادة تشغيل</button>
+      <button class="btn-ghost"   onclick="downloadAppstate()">⬇ تنزيل الحالي</button>
+    </div>
+  </div>
+
+  <!-- ── Admin Card ── -->
+  <div class="card">
+    <h2><span class="icon">👑</span> إدارة الأدمنز</h2>
+    <div>
+      <label>تعيين المالك (Owner ID):</label>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <input type="text" id="ownerInput" placeholder="Facebook User ID" style="margin:0;flex:1" />
+        <button class="btn-warning" onclick="setOwner()" style="white-space:nowrap">تعيين</button>
+      </div>
+      <label>إضافة أدمن:</label>
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <input type="text" id="addAdminInput" placeholder="Facebook User ID" style="margin:0;flex:1" />
+        <button class="btn-success" onclick="addAdmin()" style="white-space:nowrap">إضافة</button>
+      </div>
+      <label>الأدمنز الحاليون:</label>
+      <ul class="admin-list" id="adminList">
+        <li style="color:var(--muted)">جاري التحميل...</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ── Send Message Card ── -->
+  <div class="card">
+    <h2><span class="icon">💬</span> إرسال رسالة / أمر</h2>
+    <label>اختر محادثة أو أدخل Thread ID يدوياً:</label>
+    <input type="text" id="threadIdInput" placeholder="Thread / Group ID" />
+    <label>الرسالة أو الأمر (مثال: /help):</label>
+    <textarea id="msgInput" placeholder="/help"></textarea>
+    <div class="btn-row">
+      <button class="btn-primary" onclick="sendMessage()">📤 إرسال</button>
+      <button class="btn-ghost"   onclick="loadThreads()">🔄 تحميل المحادثات</button>
+    </div>
+    <div id="threadList" style="margin-top:12px;max-height:200px;overflow-y:auto"></div>
+  </div>
+
+</div>
+
+<!-- ── Toast ── -->
+<div id="toast"></div>
+
+<script>
+  /* ── Toast helper ── */
+  let _toastTimer;
+  function toast(msg, type = 'ok') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'show ' + type;
+    clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(() => { el.className = ''; }, 3200);
+  }
+
+  /* ── API call helper ── */
+  async function api(method, url, body) {
+    const opts = {
+      method,
+      headers: { 'Content-Type': 'application/json' }
+    };
+    if (body) opts.body = JSON.stringify(body);
+    const res = await fetch(url, opts);
+    return res.json();
+  }
+
+  /* ── Status polling ── */
+  async function refreshStatus() {
+    try {
+      const data = await fetch('/api/status').then(r => r.json());
+      const dot  = document.getElementById('statusDot');
+      const txt  = document.getElementById('statusText');
+      const errEl = document.getElementById('errorMsg');
+
+      dot.className = 'dot ' + (data.status === 'online' ? 'online'
+        : data.status === 'connecting' ? 'connecting'
+        : data.status === 'error'      ? 'error' : '');
+
+      const labels = {
+        online:      '🟢 متصل',
+        offline:     '⚫ غير متصل',
+        connecting:  '🟡 جاري الاتصال...',
+        error:       '🔴 خطأ في الاتصال',
+        no_appstate: '⚠️ يرجى رفع الكوكيز أولاً'
+      };
+      txt.textContent = labels[data.status] || data.status;
+
+      document.getElementById('botId').textContent  = data.botId || '—';
+      document.getElementById('uptime').textContent = data.online ? data.uptimeStr : '—';
+
+      if (data.error) {
+        errEl.textContent = data.error;
+        errEl.style.display = 'block';
+      } else {
+        errEl.style.display = 'none';
+      }
+    } catch {}
+  }
+  setInterval(refreshStatus, 4000);
+  refreshStatus();
+
+  /* ── Bot controls ── */
+  async function startBot() {
+    const d = await api('POST', '/api/start');
+    toast(d.message, d.ok ? 'ok' : 'err');
+    setTimeout(refreshStatus, 2000);
+  }
+  async function restartBot() {
+    const d = await api('POST', '/api/restart');
+    toast(d.message, d.ok ? 'ok' : 'err');
+    setTimeout(refreshStatus, 5000);
+  }
+  async function stopBot() {
+    const d = await api('POST', '/api/stop');
+    toast(d.message, d.ok ? 'ok' : 'err');
+    setTimeout(refreshStatus, 1000);
+  }
+
+  /* ── Appstate ── */
+  async function uploadAppstate() {
+    const fileInput  = document.getElementById('appstateFile');
+    const textInput  = document.getElementById('appstateText').value.trim();
+
+    if (fileInput.files.length > 0) {
+      const formData = new FormData();
+      formData.append('appstate', fileInput.files[0]);
+      const res = await fetch('/api/upload-appstate', { method: 'POST', body: formData });
+      const d = await res.json();
+      toast(d.message, d.ok ? 'ok' : 'err');
+    } else if (textInput) {
+      const d = await api('POST', '/api/upload-appstate', { appstate: textInput });
+      toast(d.message, d.ok ? 'ok' : 'err');
+    } else {
+      toast('يرجى إدخال الكوكيز أو اختيار ملف', 'err');
+    }
+    setTimeout(refreshStatus, 5000);
+  }
+
+  async function downloadAppstate() {
+    const d = await fetch('/api/appstate').then(r => r.json());
+    if (!d.ok) { toast('فشل جلب الكوكيز: ' + d.message, 'err'); return; }
+    const blob = new Blob([JSON.stringify(d.appstate, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'appstate.json';
+    a.click();
+  }
+
+  /* ── Admins ── */
+  async function loadAdmins() {
+    const d = await fetch('/api/admins').then(r => r.json());
+    if (!d.ok) return;
+    const { owner, admins } = d.data;
+    const ul = document.getElementById('adminList');
+    ul.innerHTML = '';
+
+    if (owner) {
+      const li = document.createElement('li');
+      li.innerHTML = `<span><span class="tag">مالك</span>${owner}</span>`;
+      ul.appendChild(li);
+    }
+
+    if (!admins || admins.length === 0) {
+      const li = document.createElement('li');
+      li.style.color = 'var(--muted)';
+      li.textContent = 'لا يوجد أدمنز مضافون';
+      ul.appendChild(li);
+    } else {
+      admins.forEach(id => {
+        const li = document.createElement('li');
+        li.innerHTML = `<span>${id}</span><button class="del-btn" onclick="removeAdmin('${id}')">✕</button>`;
+        ul.appendChild(li);
+      });
+    }
+  }
+  loadAdmins();
+  setInterval(loadAdmins, 10000);
+
+  async function addAdmin() {
+    const id = document.getElementById('addAdminInput').value.trim();
+    if (!id) { toast('يرجى إدخال الـ ID', 'err'); return; }
+    const d = await api('POST', '/api/admins/add', { userId: id });
+    toast(d.message, d.ok ? 'ok' : 'err');
+    document.getElementById('addAdminInput').value = '';
+    loadAdmins();
+  }
+
+  async function removeAdmin(id) {
+    const d = await api('POST', '/api/admins/remove', { userId: id });
+    toast(d.message, d.ok ? 'ok' : 'err');
+    loadAdmins();
+  }
+
+  async function setOwner() {
+    const id = document.getElementById('ownerInput').value.trim();
+    if (!id) { toast('يرجى إدخال الـ ID', 'err'); return; }
+    const d = await api('POST', '/api/admins/set-owner', { userId: id });
+    toast(d.message, d.ok ? 'ok' : 'err');
+    document.getElementById('ownerInput').value = '';
+    loadAdmins();
+  }
+
+  /* ── Send message ── */
+  async function sendMessage() {
+    const threadId = document.getElementById('threadIdInput').value.trim();
+    const message  = document.getElementById('msgInput').value.trim();
+    if (!threadId || !message) { toast('يرجى إدخال Thread ID والرسالة', 'err'); return; }
+    const d = await api('POST', '/api/send-message', { threadId, message });
+    toast(d.message, d.ok ? 'ok' : 'err');
+  }
+
+  /* ── Threads ── */
+  async function loadThreads() {
+    const container = document.getElementById('threadList');
+    container.innerHTML = '<div style="color:var(--muted);font-size:.8rem">جاري التحميل...</div>';
+    const d = await fetch('/api/threads').then(r => r.json());
+    if (!d.ok || !d.threads.length) {
+      container.innerHTML = `<div style="color:var(--muted);font-size:.8rem">${d.message || 'لا توجد محادثات'}</div>`;
+      return;
+    }
+    container.innerHTML = '';
+    d.threads.forEach(t => {
+      const div = document.createElement('div');
+      div.className = 'thread-item';
+      div.textContent = (t.name || t.threadID) + (t.isGroup ? ' 👥' : ' 💬');
+      div.onclick = () => {
+        document.querySelectorAll('.thread-item').forEach(el => el.classList.remove('selected'));
+        div.classList.add('selected');
+        document.getElementById('threadIdInput').value = t.threadID;
+      };
+      container.appendChild(div);
+    });
+  }
+</script>
+</body>
+</html>
