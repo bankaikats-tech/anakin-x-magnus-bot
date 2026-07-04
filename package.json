@@ -1,0 +1,58 @@
+{
+  "name": "anakin-x-magnus-bot",
+  "version": "1.0.0",
+  "description": "Anakin x Magnus Facebook Messenger Bot with Web Dashboard",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean --out-dir dist --external gradient-string && node scripts/cjs-bridge.cjs",
+    "dev": "node index.js",
+    "test": "node ./test/fca.test.cjs",
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.typecheck.json --noEmit"
+  },
+  "keywords": [
+    "facebook",
+    "messenger",
+    "bot",
+    "fca",
+    "anakin",
+    "magnus"
+  ],
+  "author": "Anakin x Magnus",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.13.5",
+    "axios-cookiejar-support": "^5.0.5",
+    "bluebird": "^3.7.2",
+    "cheerio": "^1.0.0-rc.10",
+    "cli-progress": "^3.12.0",
+    "duplexify": "^4.1.3",
+    "express": "^4.22.2",
+    "gradient-string": "^3.0.0",
+    "https-proxy-agent": "^4.0.0",
+    "mqtt": "^4.3.8",
+    "multer": "^1.4.5-lts.1",
+    "ora": "^9.3.0",
+    "picocolors": "^1.1.1",
+    "sequelize": "^6.37.6",
+    "sqlite3": "^5.1.7",
+    "totp-generator": "^1.0.0",
+    "tough-cookie": "^6.0.1",
+    "ws": "^8.18.1"
+  },
+  "devDependencies": {
+    "@types/cli-progress": "^3.11.6",
+    "@types/duplexify": "^3.6.5",
+    "@types/express": "^4.17.25",
+    "@types/multer": "^1.4.13",
+    "@types/node": "^24.6.1",
+    "@types/ws": "^8.18.1",
+    "eslint": "^8.50.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.3"
+  }
+}
